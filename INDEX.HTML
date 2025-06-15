@@ -3,338 +3,354 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Jogue Quem quer ser um abençoado! Um quiz bíblico com perguntas sobre fé e conhecimento religioso.">
-    <title>Quem quer ser um abençoado!</title>
-    <script src="https://cdn.tailwindcss.com"></script> 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Quem quer ser um Abençoado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Lato', sans-serif;
+        }
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
         }
         .gradient-bg {
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); 
+            background-color: #0c0a09;
+            background-image: radial-gradient(circle at top right, #4a044e, transparent),
+                              radial-gradient(circle at bottom left, #0c4a6e, transparent);
         }
-        .btn-lifeline {
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        .btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4);
         }
         .btn-lifeline:disabled {
-            background-color: #6b7280;
+            background-color: #4b5563;
             cursor: not-allowed;
-            opacity: 0.6;
+            opacity: 0.5;
             box-shadow: none;
         }
-        .btn-lifeline:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 10px rgba(0,0,0,0.15);
-        }
         .answer-option {
+            border: 2px solid #a16207;
+            background-color: rgba(120, 53, 15, 0.2);
+            backdrop-filter: blur(5px);
+            color: #fefce8;
             transition: all 0.2s ease-in-out;
-            border: 2px solid transparent;
         }
-        .answer-option:hover {
-            transform: scale(1.02);
-            border-color: #f59e0b;
+        .answer-option:hover:not([disabled]) {
+            background-color: rgba(161, 98, 7, 0.4);
+            border-color: #facc15;
         }
-        .modal {
-            transition: opacity 0.3s ease;
+        .answer-option.correct {
+            background-color: #166534 !important;
+            border-color: #22c55e !important;
         }
-        .correct-answer {
-            background-color: #16a34a !important;
-            color: white;
-            border-color: #15803d !important;
+        .answer-option.incorrect {
+            background-color: #991b1b !important;
+            border-color: #ef4444 !important;
         }
-        .incorrect-answer {
-            background-color: #dc2626 !important;
-            color: white;
-            border-color: #b91c1c !important;
+        .pyramid-step {
+            background-color: rgba(161, 98, 7, 0.1);
+            border: 1px solid #a16207;
+            color: #fefce8;
+            opacity: 0.6;
+        }
+        .pyramid-step.active {
+            background-color: #facc15;
+            color: #422006;
+            opacity: 1;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #facc15;
         }
     </style>
 </head>
-<body class="gradient-bg text-white min-h-screen flex items-center justify-center p-4">
-    <!-- Loader (opcional) -->
-    <div id="loader" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50 hidden">
-        <p class="text-lg">Carregando o jogo...</p>
-    </div>
+<body class="gradient-bg flex items-center justify-center min-h-screen p-4 text-white">
 
-    <!-- Container Principal -->
-    <div id="game-container" class="w-full max-w-3xl mx-auto bg-gray-800 bg-opacity-80 backdrop-blur-sm rounded-2xl shadow-2xl p-6 md:p-8">
-        <!-- Tela Inicial -->
+    <div id="game-container" class="w-full max-w-6xl mx-auto">
+
+        <!-- Welcome Screen -->
         <div id="welcome-screen" class="text-center">
-            <img src="https://placehold.co/600x300/203a43/f59e0b?text=Jovem+Aben%C3%A7oado&font=raleway"
-                 alt="Charge de um jovem com a Bíblia e uma medalha de ouro"
-                 class="mx-auto rounded-lg mb-6 shadow-lg"
-                 onerror="this.onerror=null; this.src='https://placehold.co/600x300?text=Imagem+N%C3%A3o+Carregada';">
-            <h1 class="text-4xl font-bold text-amber-400 mb-4">Quem quer ser um abençoado!</h1>
-            <p class="text-lg text-gray-300 mb-8">Teste seus conhecimentos e veja se você está pronto para o desafio.</p>
-            <button id="start-btn" class="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-8 rounded-lg text-xl transition duration-300 transform hover:scale-105">
-                Começar o Quiz!
+            <h1 class="text-5xl md:text-7xl font-cinzel text-amber-300" style="text-shadow: 0 0 15px #facc15;">Quem quer ser um Abençoado?</h1>
+            <p class="text-xl text-gray-300 mt-4 mb-10">Teste seus conhecimentos sobre a Igreja Adventista.</p>
+            <button id="start-btn" class="btn bg-amber-400 hover:bg-amber-300 text-amber-900 font-bold py-4 px-12 rounded-full text-2xl">
+                COMEÇAR O DESAFIO
             </button>
         </div>
 
-        <!-- Jogo -->
-        <div id="main-game" class="hidden">
-            <!-- Cabeçalho -->
-            <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-gray-600 pb-4">
-                <h1 class="text-2xl md:text-3xl font-bold text-amber-400 text-center mb-4 md:mb-0">Quem quer ser um abençoado!</h1>
-                <div class="text-lg font-semibold bg-gray-700 px-4 py-2 rounded-lg">
-                    Pergunta: <span id="question-number">1</span>/10 | Pontos: <span id="score">0</span>
+        <!-- Main Game UI -->
+        <div id="main-game" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+            <!-- Game Area -->
+            <div class="lg:col-span-3 order-2 lg:order-1">
+                <div id="quiz-area" class="bg-black bg-opacity-30 p-6 rounded-2xl shadow-2xl">
+                    <div class="mb-6 text-center text-2xl font-cinzel text-amber-300">
+                        Pergunta <span id="question-number">1</span> de 12
+                    </div>
+                    <div class="bg-black bg-opacity-40 p-6 rounded-lg mb-6 min-h-[150px] flex items-center justify-center text-center">
+                        <p id="question-text" class="text-xl md:text-2xl leading-relaxed"></p>
+                    </div>
+                    <div id="answer-options" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    </div>
                 </div>
             </div>
-
-            <!-- Ajudas -->
-            <div id="lifelines-container" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-6">
-                <button id="skip-btn" class="btn-lifeline bg-sky-600 hover:bg-sky-500 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.5 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5zM11.5 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.79.407L7.5 8.972V12.5a.5.5 0 0 1-1 0v-9a.5.5 0 0 1 1 0v3.528l3.21-2.28a.5.5 0 0 1 .79.408z"/></svg>
-                    Pular (1)
-                </button>
-                <button id="audience-btn" class="btn-lifeline bg-teal-600 hover:bg-teal-500 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path fill-rule="evenodd" d="M5.216 14A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg>
-                    Congregação (1)
-                </button>
-                <button id="pastor-btn" class="btn-lifeline bg-amber-500 hover:bg-amber-400 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708L12.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0z"/><path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
-                    Super Pastor (1)
-                </button>
+            
+            <!-- Side Panel (Lifelines & Pyramid) -->
+            <div class="lg:col-span-1 order-1 lg:order-2">
+                 <div id="lifelines" class="flex justify-around gap-2 mb-6">
+                    <button id="half-btn" class="btn-lifeline btn bg-sky-600 p-3 rounded-full shadow-lg">50:50</button>
+                    <button id="tip-btn" class="btn-lifeline btn bg-teal-500 p-3 rounded-full shadow-lg">PASTOR</button>
+                    <button id="skip-btn" class="btn-lifeline btn bg-purple-600 p-3 rounded-full shadow-lg">PULAR</button>
+                 </div>
+                 <div id="pyramid" class="space-y-1">
+                    <!-- Pyramid steps will be injected here -->
+                 </div>
             </div>
-
-            <!-- Pergunta e Respostas -->
-            <div id="quiz-area">
-                <div class="bg-gray-900 p-6 rounded-lg mb-6 min-h-[100px] flex items-center justify-center">
-                    <p id="question-text" class="text-center text-lg md:text-xl"></p>
-                </div>
-                <div id="answer-options" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            </div>
-
-            <!-- Fim do jogo -->
-            <div id="end-screen" class="hidden text-center">
-                <h2 id="end-title" class="text-3xl font-bold text-amber-400 mb-4"></h2>
-                <p id="end-message" class="text-xl mb-2"></p>
-                <p class="text-2xl font-bold mb-6">Sua pontuação final: <span id="final-score"></span></p>
-                <button id="restart-btn" class="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-8 rounded-lg text-lg transition duration-300">
-                    Jogar Novamente
-                </button>
-            </div>
+        </div>
+        
+        <!-- End Game Screen -->
+        <div id="end-screen" class="hidden text-center">
+             <h2 id="end-title" class="text-5xl font-cinzel text-amber-300 mb-6"></h2>
+             <p id="end-message" class="text-xl text-gray-300 mb-10"></p>
+             <button id="restart-btn" class="btn bg-amber-400 hover:bg-amber-300 text-amber-900 font-bold py-4 px-12 rounded-full text-2xl">
+                Jogar Novamente
+             </button>
         </div>
     </div>
 
-    <!-- Modais -->
-    <div id="audience-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden modal">
-        <div class="bg-white text-gray-800 rounded-lg p-8 max-w-md w-full text-center">
-            <h3 class="text-2xl font-bold mb-4">A Congregação Aconselha...</h3>
-            <div id="audience-chart" class="flex justify-around items-end h-48 mb-4"></div>
-            <button onclick="closeModal('audience-modal')" class="bg-gray-500 hover:bg-gray-400 text-white font-bold py-2 px-6 rounded-lg">Fechar</button>
-        </div>
-    </div>
-    <div id="pastor-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden modal">
-        <div class="bg-white text-gray-800 rounded-lg p-8 max-w-md w-full text-center">
-            <h3 class="text-2xl font-bold mb-4">O Super Pastor Responde:</h3>
-            <p class="text-lg mb-4">"Com base nos meus estudos, a resposta correta é:"</p>
-            <p id="pastor-answer" class="text-xl font-bold text-green-600 mb-6"></p>
-            <button onclick="closeModal('pastor-modal')" class="bg-gray-500 hover:bg-gray-400 text-white font-bold py-2 px-6 rounded-lg">Obrigado, Pastor!</button>
+    <!-- Modal for Helps -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-gray-900 border-2 border-amber-400 rounded-lg p-8 max-w-lg w-full text-center relative shadow-2xl">
+             <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-400 hover:text-white text-3xl">&times;</button>
+             <h3 class="text-2xl font-cinzel mb-4 text-amber-300">Dica do Super Pastor</h3>
+             <p id="modal-content" class="text-gray-200 text-lg italic"></p>
         </div>
     </div>
 
-    <!-- Script principal -->
-    <script defer>
+    <script>
         // DOM Elements
         const welcomeScreen = document.getElementById('welcome-screen');
-        const startBtn = document.getElementById('start-btn');
         const mainGame = document.getElementById('main-game');
+        const startBtn = document.getElementById('start-btn');
         const questionNumberEl = document.getElementById('question-number');
-        const scoreEl = document.getElementById('score');
         const questionTextEl = document.getElementById('question-text');
         const answerOptionsEl = document.getElementById('answer-options');
-        const quizArea = document.getElementById('quiz-area');
         const endScreen = document.getElementById('end-screen');
-        const endTitle = document.getElementById('end-title');
-        const endMessage = document.getElementById('end-message');
-        const finalScoreEl = document.getElementById('final-score');
+        const endTitleEl = document.getElementById('end-title');
+        const endMessageEl = document.getElementById('end-message');
         const restartBtn = document.getElementById('restart-btn');
+        const pyramidEl = document.getElementById('pyramid');
+        
+        // Lifeline Buttons & Modal
+        const halfBtn = document.getElementById('half-btn');
+        const tipBtn = document.getElementById('tip-btn');
         const skipBtn = document.getElementById('skip-btn');
-        const audienceBtn = document.getElementById('audience-btn');
-        const pastorBtn = document.getElementById('pastor-btn');
-        const audienceModal = document.getElementById('audience-modal');
-        const pastorModal = document.getElementById('pastor-modal');
-        const audienceChart = document.getElementById('audience-chart');
-        const pastorAnswerEl = document.getElementById('pastor-answer');
+        const modal = document.getElementById('modal');
+        const modalContent = document.getElementById('modal-content');
 
         // Game State
-        let currentQuestionIndex = 0;
-        let score = 0;
-        let lifelines;
-        let activeQuestions = [];
+        let currentQuestionIndex, score, lifelines, activeQuestions, acceptingAnswers;
+        const TOTAL_QUESTIONS_PER_QUIZ = 12;
 
-        // Full Question Bank (80 questions)
         const questionBank = [
-            // Nível 1 - Fácil
-            { question: "Em que ano a Conferência Geral foi organizada?", options: ["1844", "1863", "1888"], answer: "1863", level: 1 },
-            { question: "Qual o nome da revista para crianças publicada pela igreja?", options: ["Nosso Amiguinho", "Mundo Jovem", "Revista Adventista"], answer: "Nosso Amiguinho", level: 1 },
-            // ... continue com as outras perguntas (mantidas do original)
+          { question: "Quem foi o primeiro missionário oficial enviado pela Associação Geral para o exterior em 1874?", options: ["Joseph Bates", "J. N. Andrews", "Tiago White", "Urias Smith"], answer: "J. N. Andrews", tip: "Ele foi enviado para a Suíça e uma universidade adventista leva seu nome." },
+          { question: "Qual o nome do navio missionário que foi financiado em grande parte pelas ofertas da Escola Sabatina e navegou para as Ilhas Pitcairn?", options: ["O Mensageiro", "A Esperança", "Pitcairn", "Estrela da Manhã"], answer: "Pitcairn", tip: "O nome do navio é o mesmo de seu destino mais famoso." },
+          { question: "Em que cidade ocorreu a histórica sessão da Associação Geral de 1888, focada na justificação pela fé?", options: ["Battle Creek", "Takoma Park", "Minneapolis", "Oakland"], answer: "Minneapolis", tip: "Esta sessão foi um marco teológico e os sermões de Jones e Waggoner foram centrais." },
+          { question: "A 'Reforma de Saúde' foi uma mensagem proeminente entre os pioneiros. Em que ano Ellen White teve sua principal visão sobre o tema?", options: ["1844", "1858", "1863", "1848"], answer: "1863", tip: "Foi no mesmo ano da organização oficial da Associação Geral, mostrando a importância do tema desde o início." },
+          { question: "Qual destes pioneiros NÃO formava o trio inicial que estudou a doutrina do Santuário após o desapontamento de 1844?", options: ["Hiram Edson", "O.R.L. Crosier", "Joseph Bates", "F. B. Hahn"], answer: "Joseph Bates", tip: "Bates foi crucial para a doutrina do Sábado, mas o estudo inicial do santuário partiu de uma experiência em um milharal." },
+          { question: "Qual é o nome da agência humanitária mundial da Igreja Adventista, estabelecida oficialmente em 1984?", options: ["ADRA", "ASA", "Hope Channel", "OFASA"], answer: "ADRA", tip: "Sua sigla significa Agência Adventista de Desenvolvimento e Recursos Assistenciais." },
+          { question: "Segundo dados de 2023, qual Divisão da Igreja Adventista possui o maior número de membros?", options: ["Divisão Norte-Americana", "Divisão Sul-Americana", "Divisão Sul-Asiática", "Divisão Centro-Leste Africana"], answer: "Divisão Centro-Leste Africana", tip: "O crescimento da igreja na África tem sido o mais expressivo nas últimas décadas." },
+          { question: "O projeto 'Impacto Esperança', de distribuição massiva de livros, é uma iniciativa de qual região administrativa da igreja?", options: ["Associação Geral", "Divisão Norte-Americana", "Divisão Sul-Americana", "Divisão Transeuropeia"], answer: "Divisão Sul-Americana", tip: "Este projeto anual mobiliza milhões de membros em 8 países da América do Sul." },
+          { question: "Qual é o nome da Universidade Adventista que abriga o 'Geoscience Research Institute', um instituto de pesquisa sobre ciência e fé?", options: ["Andrews University", "Loma Linda University", "Oakwood University", "Walla Walla University"], answer: "Loma Linda University", tip: "Esta universidade na Califórnia é mundialmente famosa por sua faculdade de medicina e pesquisa." },
+          { question: "O programa de TV 'Está Escrito' foi pioneiro no uso da televisão para o evangelismo. Quem foi seu fundador e primeiro apresentador?", options: ["H.M.S. Richards", "George Vandeman", "Mark Finley", "William Fagal"], answer: "George Vandeman", tip: "Ele iniciou o programa em 1956, focando em uma abordagem cristocêntrica e evangelística." },
+          { question: "A doutrina do 'Juízo Investigativo', um pilar da teologia adventista, está primariamente baseada na interpretação de qual passagem bíblica?", options: ["Gênesis 1-3", "Isaías 53", "Daniel 8:14", "Apocalipse 14"], answer: "Daniel 8:14", tip: "A profecia das 2300 tardes e manhãs é o texto chave para a compreensão desta doutrina." },
+          { question: "Qual o nome da primeira instituição de ensino superior estabelecida pelos adventistas, que mais tarde se tornou a Andrews University?", options: ["Atlantic Union College", "Battle Creek College", "Walla Walla College", "Pacific Union College"], answer: "Battle Creek College", tip: "A instituição foi fundada na cidade que era o coração da igreja em seus primórdios." },
+          { question: "A Igreja Adventista opera a maior rede integrada de hospitais e clínicas protestantes do mundo. Verdadeiro ou Falso?", options: ["Verdadeiro", "Falso", "Apenas na América do Norte", "Apenas em países em desenvolvimento"], answer: "Verdadeiro", tip: "A ênfase na saúde integral resultou em uma vasta rede global de instituições de saúde." },
+          { question: "O Clube de Desbravadores, um ministério mundial para jovens, foi oficialmente adotado pela Associação Geral em que ano?", options: ["1922", "1946", "1950", "1961"], answer: "1950", tip: "Embora clubes locais existissem antes, a oficialização mundial ocorreu em meados do século XX." },
+          { question: "Qual é a posição oficial da Igreja Adventista sobre o serviço militar?", options: ["Obriga o serviço armado", "Proíbe qualquer forma de serviço", "Recomenda o não-combatentismo, servindo em funções que não envolvam portar armas", "Não possui posição oficial"], answer: "Recomenda o não-combatentismo, servindo em funções que não envolvam portar armas", tip: "A posição busca harmonizar o dever cívico com o princípio da não-violência." },
+          { question: "A série de livros 'Conflito dos Séculos' é composta por quantos volumes?", options: ["3", "7", "5", "4"], answer: "5", tip: "Começa com Patriarcas e Profetas e termina com O Grande Conflito." },
+          { question: "O que significa a sigla 'VOP' no contexto da mídia adventista no Brasil?", options: ["Voz da Oração", "Visão do porvir", "A Voz da Profecia", "Verdades para o Povo"], answer: "A Voz da Profecia", tip: "É o programa de rádio mais antigo da igreja, fundado por H.M.S Richards." },
+          { question: "Qual evento histórico é conhecido como o 'Berço do Adventismo'?", options: ["A Reforma Protestante", "O Segundo Grande Despertar", "O Concílio de Nicéia", "A Revolução Francesa"], answer: "O Segundo Grande Despertar", tip: "Foi um período de grande reavivamento religioso nos EUA no início do século XIX, que deu origem a vários movimentos, incluindo o Millerita." },
+          { question: "A 'Missão Calebe' é um projeto de voluntariado que desafia jovens a dedicarem qual período de suas vidas à missão?", options: ["Um fim de semana", "Um mês", "As férias", "Um ano inteiro"], answer: "As férias", tip: "O nome remete ao personagem bíblico que demonstrou fé e coragem para conquistar a terra prometida." },
+          { question: "Quantas crenças fundamentais a Igreja Adventista do Sétimo Dia possui oficialmente?", options: ["10", "27", "28", "30"], answer: "28", tip: "A última crença foi adicionada em 2005." },
+          { question: "Qual foi o primeiro presidente da Associação Geral dos Adventistas do Sétimo Dia?", options: ["Tiago White", "J. N. Loughborough", "John Byington", "George Butler"], answer: "John Byington", tip: "Apesar da grande influência de Tiago White, ele não foi o primeiro a ocupar oficialmente o cargo." },
+          { question: "A teoria musical do 'santuário celestial' influenciou qual aspecto cultural da igreja primitiva?", options: ["A arquitetura das igrejas", "O estilo de pregação", "A hinologia e a música sacra", "As práticas dietéticas"], answer: "A hinologia e a música sacra", tip: "A música era vista como uma forma de adoração que refletia a harmonia celestial." },
+          { question: "Em que país sul-americano a obra adventista começou com a distribuição de literatura por um vendedor de Bíblias?", options: ["Brasil", "Chile", "Argentina", "Peru"], answer: "Argentina", tip: "A obra colportagem foi fundamental para o início da igreja no continente." },
+          { question: "Quem foi a primeira mulher licenciada como ministra pela Igreja Adventista?", options: ["Ellen G. White", "Sarepta Myrenda Irish Henry", "Lottie Blake", "Eva B. Dykes"], answer: "Sarepta Myrenda Irish Henry", tip: "Ela foi uma líder do movimento de temperança antes de se tornar adventista." },
+          { question: "O que foi a 'Reforma do Vestuário' promovida por Ellen White?", options: ["A adoção de uniformes para os membros", "Um estilo de vestimenta modesto e saudável, que não comprimia o corpo", "A proibição do uso de joias", "A criação de uma marca de roupas da igreja"], answer: "Um estilo de vestimenta modesto e saudável, que não comprimia o corpo", tip: "Focava na saúde e simplicidade, em contraste com a moda restritiva da época vitoriana." },
+          { question: "Qual famoso cereal matinal foi inventado pelo Dr. John Harvey Kellogg no Sanatório de Battle Creek?", options: ["Aveia Quaker", "Cheerios", "Corn Flakes (Flocos de Milho)", "All-Bran"], answer: "Corn Flakes (Flocos de Milho)", tip: "A invenção foi parte de uma busca por alimentos saudáveis para os pacientes do sanatório." },
+          { question: "Qual é o nome da publicação oficial da Igreja Adventista, uma das revistas religiosas mais antigas dos EUA?", options: ["Adventist Review", "Signs of the Times", "Liberty Magazine", "Guide Magazine"], answer: "Adventist Review", tip: "Seu nome original era 'The Advent Review and Sabbath Herald'." },
+          { question: "O 'Plano de 5 Dias para Deixar de Fumar' foi uma iniciativa de saúde pública pioneira desenvolvida por qual médico adventista?", options: ["John Harvey Kellogg", "J. Wayne McFarland", "Hans Diehl", "Caldwell Esselstyn"], answer: "J. Wayne McFarland", tip: "Ele e seu colega desenvolveram o programa nos anos 60, com grande sucesso mundial." },
+          { question: "Atualmente, em quantos países e territórios reconhecidos pela ONU a Igreja Adventista possui presença estabelecida?", options: ["Cerca de 150", "Cerca de 180", "Mais de 200", "Em todos os países"], answer: "Mais de 200", tip: "A presença adventista é uma das mais geograficamente difundidas entre as denominações protestantes." },
+          { question: "A sigla 'GCAS' se refere a qual serviço de auditoria interna da igreja?", options: ["Serviço de Auditoria da Associação Geral", "Grupo de Contadores e Auditores Sênior", "Gabinete Central de Auditoria e Supervisão", "Não é uma sigla oficial da igreja"], answer: "Serviço de Auditoria da Associação Geral", tip: "É o órgão responsável por auditar as finanças das organizações da igreja em todo o mundo." },
         ];
+        
+        // --- Game Logic ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        
+        function startGame() {
+            welcomeScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            mainGame.classList.remove('hidden');
 
-        function selectRandomQuestions() {
-            const shuffled = questionBank.sort(() => 0.5 - Math.random());
-            return shuffled.slice(0, 10).sort((a, b) => a.level - b.level);
+            score = 0;
+            currentQuestionIndex = 0;
+            lifelines = { skip: 1, tip: 1, half: 1 };
+            acceptingAnswers = true;
+            
+            updateLifelineButtons();
+            
+            shuffleArray(questionBank);
+            activeQuestions = questionBank.slice(0, TOTAL_QUESTIONS_PER_QUIZ);
+            
+            buildPyramid();
+            loadQuestion();
+        }
+        
+        function buildPyramid() {
+            pyramidEl.innerHTML = '';
+            for(let i = TOTAL_QUESTIONS_PER_QUIZ; i > 0; i--) {
+                const step = document.createElement('div');
+                step.className = 'pyramid-step rounded-md text-center font-bold text-lg p-1';
+                step.textContent = `Pergunta ${i}`;
+                step.dataset.step = i;
+                pyramidEl.appendChild(step);
+            }
         }
 
-        function startGame() {
-            activeQuestions = selectRandomQuestions();
-            currentQuestionIndex = 0;
-            score = 0;
-            lifelines = { skip: 1, audience: 1, pastor: 1 };
-            welcomeScreen.classList.add('hidden');
-            mainGame.classList.remove('hidden');
-            updateLifelineButtons();
-            loadQuestion();
+        function updatePyramid() {
+            document.querySelectorAll('.pyramid-step').forEach(el => el.classList.remove('active'));
+            const currentStep = document.querySelector(`.pyramid-step[data-step="${currentQuestionIndex + 1}"]`);
+            if (currentStep) {
+                currentStep.classList.add('active');
+            }
         }
 
         function loadQuestion() {
-            if (currentQuestionIndex >= activeQuestions.length) {
+            if (currentQuestionIndex >= TOTAL_QUESTIONS_PER_QUIZ) {
                 endGame(true);
                 return;
             }
+
+            acceptingAnswers = true;
             const currentQuestion = activeQuestions[currentQuestionIndex];
+            
             questionNumberEl.textContent = currentQuestionIndex + 1;
-            scoreEl.textContent = score;
             questionTextEl.textContent = currentQuestion.question;
+            
             answerOptionsEl.innerHTML = "";
             currentQuestion.options.forEach(option => {
                 const button = document.createElement('button');
-                button.textContent = option;
-                button.className = "answer-option bg-gray-700 p-4 rounded-lg text-left w-full hover:bg-gray-600";
+                button.innerHTML = `<span>${option}</span>`;
+                button.className = "answer-option text-center p-4 rounded-lg text-lg";
                 button.onclick = () => selectAnswer(button, option);
                 answerOptionsEl.appendChild(button);
             });
+            updatePyramid();
         }
-
+        
         function selectAnswer(button, selectedOption) {
-            Array.from(answerOptionsEl.children).forEach(btn => btn.disabled = true);
+            if (!acceptingAnswers) return;
+            acceptingAnswers = false;
+
             const currentQuestion = activeQuestions[currentQuestionIndex];
             const isCorrect = selectedOption === currentQuestion.answer;
+            
+            button.classList.add(isCorrect ? 'correct' : 'incorrect');
 
             if (isCorrect) {
-                button.classList.add('correct-answer');
-                score += currentQuestion.level * 10;
-                scoreEl.textContent = score;
+                score++;
                 setTimeout(() => {
                     currentQuestionIndex++;
                     loadQuestion();
                 }, 1500);
             } else {
-                button.classList.add('incorrect-answer');
                 Array.from(answerOptionsEl.children).forEach(btn => {
                     if (btn.textContent === currentQuestion.answer) {
-                        btn.classList.add('correct-answer');
+                        btn.classList.add('correct');
                     }
                 });
-                setTimeout(() => endGame(false), 2500);
+                setTimeout(() => {
+                    endGame(false);
+                }, 2500);
             }
         }
 
         function updateLifelineButtons() {
-            skipBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.5 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5zM11.5 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.79.407L7.5 8.972V12.5a.5.5 0 0 1-1 0v-9a.5.5 0 0 1 1 0v3.528l3.21-2.28a.5.5 0 0 1 .79.408z"/></svg> Pular (${lifelines.skip})`;
-            audienceBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path fill-rule="evenodd" d="M5.216 14A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg> Congregação (${lifelines.audience})`;
-            pastorBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708L12.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0z"/><path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg> Super Pastor (${lifelines.pastor})`;
+            halfBtn.disabled = lifelines.half === 0;
+            tipBtn.disabled = lifelines.tip === 0;
             skipBtn.disabled = lifelines.skip === 0;
-            audienceBtn.disabled = lifelines.audience === 0;
-            pastorBtn.disabled = lifelines.pastor === 0;
+        }
+
+        // --- Lifeline Functions ---
+        function useHalf() {
+            if (lifelines.half > 0) {
+                lifelines.half = 0;
+                updateLifelineButtons();
+                
+                const currentQuestion = activeQuestions[currentQuestionIndex];
+                const incorrectOptions = currentQuestion.options.filter(opt => opt !== currentQuestion.answer);
+                shuffleArray(incorrectOptions);
+                
+                const optionsToHide = incorrectOptions.slice(0, 2);
+                
+                Array.from(answerOptionsEl.children).forEach(btn => {
+                    if (optionsToHide.includes(btn.textContent)) {
+                        btn.style.visibility = 'hidden';
+                        btn.disabled = true;
+                    }
+                });
+            }
+        }
+
+        function useTip() {
+            if (lifelines.tip > 0) {
+                lifelines.tip = 0;
+                updateLifelineButtons();
+                const currentQuestion = activeQuestions[currentQuestionIndex];
+                modalContent.textContent = currentQuestion.tip;
+                modal.classList.remove('hidden');
+            }
         }
 
         function useSkip() {
             if (lifelines.skip > 0) {
-                lifelines.skip--;
+                lifelines.skip = 0;
                 updateLifelineButtons();
                 currentQuestionIndex++;
                 loadQuestion();
             }
         }
 
-        function useAudience() {
-            if (lifelines.audience > 0) {
-                lifelines.audience--;
-                updateLifelineButtons();
-                const currentQuestion = activeQuestions[currentQuestionIndex];
-                const options = currentQuestion.options;
-                const correctAnswer = currentQuestion.answer;
-                let probabilities = {};
-                let remainingProb = 100;
-                let correctAnswerProb = Math.floor(Math.random() * 31) + 50;
-                probabilities[correctAnswer] = correctAnswerProb;
-                remainingProb -= correctAnswerProb;
-                const otherOptions = options.filter(opt => opt !== correctAnswer);
-
-                otherOptions.forEach((option, index) => {
-                    if (index === otherOptions.length - 1) {
-                        probabilities[option] = remainingProb;
-                    } else {
-                        const prob = Math.floor(Math.random() * remainingProb);
-                        probabilities[option] = prob;
-                        remainingProb -= prob;
-                    }
-                });
-
-                audienceChart.innerHTML = '';
-                options.sort(() => 0.5 - Math.random()).forEach(option => {
-                    const barContainer = document.createElement('div');
-                    barContainer.className = 'flex flex-col items-center h-full justify-end px-1';
-                    const bar = document.createElement('div');
-                    bar.style.height = '0%';
-                    setTimeout(() => { bar.style.height = `${probabilities[option]}%`; }, 100);
-                    bar.className = 'w-16 bg-teal-500 rounded-t-lg transition-all duration-1000 ease-out flex items-center justify-center text-white font-bold pt-1';
-                    bar.textContent = `${probabilities[option]}%`;
-                    const label = document.createElement('p');
-                    label.textContent = option;
-                    label.className = 'text-xs mt-1 text-center break-words w-16';
-                    barContainer.appendChild(bar);
-                    barContainer.appendChild(label);
-                    audienceChart.appendChild(barContainer);
-                });
-
-                openModal('audience-modal');
-            }
+        function closeModal() {
+            modal.classList.add('hidden');
         }
-
-        function usePastor() {
-            if (lifelines.pastor > 0) {
-                lifelines.pastor--;
-                updateLifelineButtons();
-                const currentQuestion = activeQuestions[currentQuestionIndex];
-                pastorAnswerEl.textContent = currentQuestion.answer;
-                openModal('pastor-modal');
-            }
-        }
-
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.remove('hidden');
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-        }
+        window.closeModal = closeModal;
 
         function endGame(isWinner) {
-            quizArea.classList.add('hidden');
+            mainGame.classList.add('hidden');
             endScreen.classList.remove('hidden');
+            
             if (isWinner) {
-                endTitle.textContent = "Parabéns, você é um abençoado!";
-                endMessage.textContent = "Você zerou o jogo e mostrou um conhecimento incrível. Que Deus continue iluminando sua mente!";
+                endTitleEl.textContent = "Parabéns!";
+                endMessageEl.textContent = "Você respondeu todas as perguntas e provou ser um verdadeiro abençoado! Seu conhecimento é inspirador.";
             } else {
-                endTitle.textContent = "Fim de Jogo!";
-                endMessage.textContent = "Não desanime! Cada pergunta é uma oportunidade de aprender. Continue estudando e tente de novo!";
+                endTitleEl.textContent = "Fim de Jogo";
+                endMessageEl.textContent = `Você acertou ${score} de ${currentQuestionIndex + 1} perguntas. Continue estudando para alcançar o topo!`;
             }
-            finalScoreEl.textContent = score;
         }
 
         // Event Listeners
         startBtn.addEventListener('click', startGame);
-        restartBtn.addEventListener('click', () => {
-            endScreen.classList.add('hidden');
-            welcomeScreen.classList.remove('hidden');
-        });
+        restartBtn.addEventListener('click', startGame);
+        halfBtn.addEventListener('click', useHalf);
+        tipBtn.addEventListener('click', useTip);
         skipBtn.addEventListener('click', useSkip);
-        audienceBtn.addEventListener('click', useAudience);
-        pastorBtn.addEventListener('click', usePastor);
+
     </script>
 </body>
 </html>
