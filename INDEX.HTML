@@ -3,354 +3,547 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quem quer ser um Abençoado</title>
+    <title>Mapa Bíblico - O Jogo</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Lato', sans-serif;
+            font-family: 'Roboto Slab', serif;
+            touch-action: manipulation; /* Improves mobile responsiveness */
         }
-        .font-cinzel {
-            font-family: 'Cinzel', serif;
+        .board-grid {
+            grid-template-columns: repeat(6, minmax(0, 1fr));
         }
-        .gradient-bg {
-            background-color: #0c0a09;
-            background-image: radial-gradient(circle at top right, #4a044e, transparent),
-                              radial-gradient(circle at bottom left, #0c4a6e, transparent);
+        .board-cell {
+            aspect-ratio: 1 / 1;
+            position: relative;
         }
-        .btn {
+        .player-token {
+            width: 25%;
+            height: 25%;
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.5s ease-in-out;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            color: white;
+            font-weight: bold;
+        }
+        .player-red { background-color: #ef4444; }
+        .player-blue { background-color: #3b82f6; }
+        .player-yellow { background-color: #eab308; }
+        .token-red { top: 10%; left: 10%; }
+        .token-blue { top: 10%; right: 10%; }
+        .token-yellow { bottom: 10%; left: 10%; }
+
+        #modal {
+            transform: scale(0.95);
+            opacity: 0;
+            visibility: hidden;
             transition: all 0.2s ease-in-out;
         }
-        .btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4);
-        }
-        .btn-lifeline:disabled {
-            background-color: #4b5563;
-            cursor: not-allowed;
-            opacity: 0.5;
-            box-shadow: none;
-        }
-        .answer-option {
-            border: 2px solid #a16207;
-            background-color: rgba(120, 53, 15, 0.2);
-            backdrop-filter: blur(5px);
-            color: #fefce8;
-            transition: all 0.2s ease-in-out;
-        }
-        .answer-option:hover:not([disabled]) {
-            background-color: rgba(161, 98, 7, 0.4);
-            border-color: #facc15;
-        }
-        .answer-option.correct {
-            background-color: #166534 !important;
-            border-color: #22c55e !important;
-        }
-        .answer-option.incorrect {
-            background-color: #991b1b !important;
-            border-color: #ef4444 !important;
-        }
-        .pyramid-step {
-            background-color: rgba(161, 98, 7, 0.1);
-            border: 1px solid #a16207;
-            color: #fefce8;
-            opacity: 0.6;
-        }
-        .pyramid-step.active {
-            background-color: #facc15;
-            color: #422006;
+        #modal.active {
+            transform: scale(1);
             opacity: 1;
-            transform: scale(1.1);
-            box-shadow: 0 0 15px #facc15;
+            visibility: visible;
+        }
+        /* Hide number input arrows */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
         }
     </style>
 </head>
-<body class="gradient-bg flex items-center justify-center min-h-screen p-4 text-white">
+<body class="bg-amber-50 text-stone-800 flex items-center justify-center min-h-screen p-4">
 
-    <div id="game-container" class="w-full max-w-6xl mx-auto">
-
-        <!-- Welcome Screen -->
-        <div id="welcome-screen" class="text-center">
-            <h1 class="text-5xl md:text-7xl font-cinzel text-amber-300" style="text-shadow: 0 0 15px #facc15;">Quem quer ser um Abençoado?</h1>
-            <p class="text-xl text-gray-300 mt-4 mb-10">Teste seus conhecimentos sobre a Igreja Adventista.</p>
-            <button id="start-btn" class="btn bg-amber-400 hover:bg-amber-300 text-amber-900 font-bold py-4 px-12 rounded-full text-2xl">
-                COMEÇAR O DESAFIO
-            </button>
+    <!-- Game Container -->
+    <div id="gameContainer" class="w-full max-w-4xl mx-auto hidden">
+        <h1 class="text-4xl md:text-5xl font-bold text-center text-amber-800 mb-4">Mapa Bíblico</h1>
+        
+        <!-- Game Board -->
+        <div class="bg-amber-200 p-4 rounded-2xl shadow-lg border-4 border-amber-300">
+            <div id="board" class="grid board-grid gap-2">
+                <!-- Cells will be generated by JS -->
+            </div>
         </div>
 
-        <!-- Main Game UI -->
-        <div id="main-game" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-            <!-- Game Area -->
-            <div class="lg:col-span-3 order-2 lg:order-1">
-                <div id="quiz-area" class="bg-black bg-opacity-30 p-6 rounded-2xl shadow-2xl">
-                    <div class="mb-6 text-center text-2xl font-cinzel text-amber-300">
-                        Pergunta <span id="question-number">1</span> de 12
-                    </div>
-                    <div class="bg-black bg-opacity-40 p-6 rounded-lg mb-6 min-h-[150px] flex items-center justify-center text-center">
-                        <p id="question-text" class="text-xl md:text-2xl leading-relaxed"></p>
-                    </div>
-                    <div id="answer-options" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    </div>
+        <!-- Controls -->
+        <div class="mt-6 p-4 bg-white rounded-2xl shadow-md">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="text-center">
+                    <p class="text-lg">Vez do time:</p>
+                    <div id="currentPlayerIndicator" class="w-24 h-10 rounded-lg mx-auto mt-1 transition-colors"></div>
                 </div>
+                <div class="text-center">
+                    <label for="diceInput" class="text-2xl font-bold">Valor do Dado</label>
+                    <input type="number" id="diceInput" min="1" max="6" class="text-center text-4xl font-bold text-stone-700 w-24 h-16 border-2 border-stone-300 rounded-lg mt-1" placeholder="1-6">
+                </div>
+                <button id="movePlayerBtn" class="bg-amber-600 text-white text-xl font-bold py-3 px-8 rounded-lg shadow-md hover:bg-amber-700 transition transform hover:scale-105 active:scale-95 w-full md:w-auto">
+                    Avançar Casas
+                </button>
             </div>
-            
-            <!-- Side Panel (Lifelines & Pyramid) -->
-            <div class="lg:col-span-1 order-1 lg:order-2">
-                 <div id="lifelines" class="flex justify-around gap-2 mb-6">
-                    <button id="half-btn" class="btn-lifeline btn bg-sky-600 p-3 rounded-full shadow-lg">50:50</button>
-                    <button id="tip-btn" class="btn-lifeline btn bg-teal-500 p-3 rounded-full shadow-lg">PASTOR</button>
-                    <button id="skip-btn" class="btn-lifeline btn bg-purple-600 p-3 rounded-full shadow-lg">PULAR</button>
-                 </div>
-                 <div id="pyramid" class="space-y-1">
-                    <!-- Pyramid steps will be injected here -->
-                 </div>
-            </div>
-        </div>
-        
-        <!-- End Game Screen -->
-        <div id="end-screen" class="hidden text-center">
-             <h2 id="end-title" class="text-5xl font-cinzel text-amber-300 mb-6"></h2>
-             <p id="end-message" class="text-xl text-gray-300 mb-10"></p>
-             <button id="restart-btn" class="btn bg-amber-400 hover:bg-amber-300 text-amber-900 font-bold py-4 px-12 rounded-full text-2xl">
-                Jogar Novamente
-             </button>
         </div>
     </div>
 
-    <!-- Modal for Helps -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-gray-900 border-2 border-amber-400 rounded-lg p-8 max-w-lg w-full text-center relative shadow-2xl">
-             <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-400 hover:text-white text-3xl">&times;</button>
-             <h3 class="text-2xl font-cinzel mb-4 text-amber-300">Dica do Super Pastor</h3>
-             <p id="modal-content" class="text-gray-200 text-lg italic"></p>
+    <!-- Setup Screen -->
+    <div id="setupScreen" class="text-center bg-white p-8 rounded-2xl shadow-xl">
+        <h1 class="text-4xl font-bold text-amber-800 mb-2">Bem-vindo ao Mapa Bíblico!</h1>
+        <p class="text-stone-600 mb-8">Selecione o número de times para começar a jornada.</p>
+        <div class="flex justify-center gap-4">
+            <button onclick="startGame(2)" class="bg-blue-500 text-white text-xl font-bold py-3 px-8 rounded-lg shadow-md hover:bg-blue-600 transition transform hover:scale-105">2 Times</button>
+            <button onclick="startGame(3)" class="bg-red-500 text-white text-xl font-bold py-3 px-8 rounded-lg shadow-md hover:bg-red-600 transition transform hover:scale-105">3 Times</button>
+        </div>
+    </div>
+    
+    <!-- Modal for Questions/Challenges/Winner -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-md w-full text-center">
+            <h2 id="modalTitle" class="text-2xl font-bold mb-4 text-amber-800">Desafio da Casa 10</h2>
+            <p id="modalText" class="text-stone-700 mb-6 text-lg">Aqui vai o texto da pergunta ou da prenda.</p>
+            <div id="modalActions" class="flex flex-col sm:flex-row justify-center gap-3">
+                <!-- Action buttons will be generated by JS -->
+            </div>
         </div>
     </div>
 
-    <script>
-        // DOM Elements
-        const welcomeScreen = document.getElementById('welcome-screen');
-        const mainGame = document.getElementById('main-game');
-        const startBtn = document.getElementById('start-btn');
-        const questionNumberEl = document.getElementById('question-number');
-        const questionTextEl = document.getElementById('question-text');
-        const answerOptionsEl = document.getElementById('answer-options');
-        const endScreen = document.getElementById('end-screen');
-        const endTitleEl = document.getElementById('end-title');
-        const endMessageEl = document.getElementById('end-message');
-        const restartBtn = document.getElementById('restart-btn');
-        const pyramidEl = document.getElementById('pyramid');
+
+<script>
+    // --- GAME DATA ---
+    const challenges = {
+        1: [
+            { type: 'question', text: 'Diga quais são os 5 primeiros livros da Bíblia (Pentateuco) na ordem correta.', correct: { action: 'move', spaces: 2, msg: 'Correto! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Errado! Fique onde está.' } },
+            { type: 'question', text: 'Quem foi o primeiro Rei de Israel?', correct: { action: 'move', spaces: 1, msg: 'Saul! Correto, avance 1.' }, incorrect: { action: 'stay', msg: 'Incorreto.' } },
+            { type: 'question', text: 'Qual rei babilônico perdeu seu reinado após zombar das coisas de Deus?', correct: { action: 'move', spaces: 2, msg: 'Belsazar! Correto, avance 2.' }, incorrect: { action: 'stay', msg: 'Incorreto.' } },
+            { type: 'question', text: 'Em Qual livro de profeta menor, contém a declaração “o justo viverá pela sua fé”?', correct: { action: 'move', spaces: 3, msg: 'Habacuque! Correto, avance 3.' }, incorrect: { action: 'stay', msg: 'Incorreto.' } }
+        ],
+        2: [
+            { type: 'challenge', text: 'Cante um trecho de um hino que você goste só quem em estilo hip hop.', complete: { action: 'stay', msg: 'Bela voz! Fique onde está.' }, incomplete: { action: 'move', spaces: -1, msg: 'Que pena! Volte 1 casa.' } },
+            { type: 'challenge', text: 'Agradeça a Deus por 3 coisas em sua vida imitando a voz do finado Silvio Santos.', complete: { action: 'move', spaces: 1, msg: 'Amém! Avance 1 casa.' }, incomplete: { action: 'stay', msg: 'A gratidão é importante. Fique onde está.' } }
+            
+        ],
+        3: [
+            { type: 'question', text: 'Quem foi chamado de careca por vários jovens?', correct: { action: 'move', spaces: 2, msg: 'Isso mesmo, Eliseu! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Resposta errada. Fique onde está.' } },
+            { type: 'question', text: 'Quem era o pai de Davi?', correct: { action: 'move', spaces: 2, msg: 'Jessé! Correto, avance 2.' }, incorrect: { action: 'stay', msg: 'Errado.' } },
+            { type: 'question', text: 'Quem era a mãe de Ismael?', correct: { action: 'move', spaces: 2, msg: 'Isso mesmo, Hagar! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Resposta errada. Fique onde está.' } },
+            { type: 'question', text: 'Quem eram os 3 filhos de Noé?', correct: { action: 'move', spaces: 2, msg: 'Cão,Sem e Jafé! Correto, avance 2.' }, incorrect: { action: 'stay', msg: 'Errado.' } }
+        ],
+        4: [
+            { type: 'question', text: 'Qual foi a ultima praga no Egito?', correct: { action: 'move', spaces: 1, msg: 'Correto, Morte dos Primogenitos! Avance 1 casa.' }, incorrect: { action: 'stay', msg: 'Não foi dessa vez. Permaneça.' } },
+            { type: 'challenge', text: 'Cite o nome de 6 dos 12 discípulos.', complete: { action: 'move', spaces: 2, msg: 'Excelente! Avance 2 casas.' }, incomplete: { action: 'stay', msg: 'Precisa estudar mais. Fique parado.' } },
+            { type: 'question', text: 'Mical era filha de quem?', correct: { action: 'move', spaces: 1, msg: 'Correto, Saul! Avance 1 casa.' }, incorrect: { action: 'stay', msg: 'Não foi dessa vez. Permaneça.' } },
+            { type: 'challenge', text: 'Cite o nome de 3 das Igrejas mencionadas no Apocalipse.', complete: { action: 'move', spaces: 2, msg: 'Excelente! Avance 2 casas.' }, incomplete: { action: 'stay', msg: 'Precisa estudar mais. Fique parado.' } }
+        ],
+        5: [
+            { type: 'lucky', text: 'Você achou a Arca da Aliança que estava perdida! Avance 3 casas.', action: 'move', spaces: 3 }
+        ],
+        6: [
+            { type: 'challenge', text: 'Fale o nome de 3 profetas maiores.', complete: { action: 'move', spaces: 2, msg: 'Excelente! Avance 2 casas.' }, incomplete: { action: 'stay', msg: 'Estude mais um pouco. Fique onde está.' } },
+            { type: 'question', text: 'Quais eram os nomes de Sadraque, Mesaque e Abedi Nego antes da Babilônia?', correct: { action: 'move', spaces: 2, msg: 'Hananias, Misael e Azarias.! Correto. Avance 2.' }, incorrect: { action: 'stay', msg: 'Errado.' } },
+            { type: 'challenge', text: 'Diga 7 dos 10 Mandamentos', complete: { action: 'move', spaces: 1, msg: 'Boa memória! Avance 1 casa.' }, incomplete: { action: 'stay', msg: 'Quase. Fique onde está.' } },
+            { type: 'question', text: 'Quantos anos de fome extrema tiveram no Egito e no mundo na época de José?', correct: { action: 'move', spaces: 2, msg: '7 anos.! Correto. Avance 2.' }, incorrect: { action: 'stay', msg: 'Errado.' } }
+        ],
+        7: [
+            { type: 'question', text: 'Onde Jesus fez seu primeiro milagre?', correct: { action: 'move', spaces: 2, msg: 'Casamento! Certo! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Errado. Fique onde está.' } },
+            { type: 'question', text: 'O que João Batista era para Jesus?', correct: { action: 'move', spaces: 2, msg: 'Primo! Certo! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Errado. Fique onde está.' } },
+            { type: 'question', text: 'Quem era o discipulo amado?', correct: { action: 'move', spaces: 2, msg: 'João! Certo! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Errado. Fique onde está.' } },
+            { type: 'question', text: 'Em que Ilha foi escrita o Apocalipse?', correct: { action: 'move', spaces: 2, msg: 'Patmos! Certo! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Errado. Fique onde está.' } }
+        ],
+        8: [
+            { type: 'unlucky', text: 'Você tropeçou em uma pedra no caminho. Volte 2 casas.', action: 'move', spaces: -2 }
+        ],
+        9: [
+            { type: 'question', text: 'Quem era o sogro de Jacó?', correct: { action: 'move', spaces: 3, msg: 'Labão! Avance 3 casas.' }, incorrect: { action: 'move', spaces: -1, msg: 'Errado! Volte 1 casa.' } },
+            { type: 'question', text: 'Quem era a esposa de Moisés?', correct: { action: 'move', spaces: 3, msg: 'Zípora! Avance 3 casas.' }, incorrect: { action: 'move', spaces: -1, msg: 'Errado! Volte 1 casa.' } },
+            { type: 'question', text: 'Quem foi o primeiro assassino da Bíblia?', correct: { action: 'move', spaces: 3, msg: 'Caim! Avance 3 casas.' }, incorrect: { action: 'move', spaces: -1, msg: 'Errado! Volte 1 casa.' } },
+            { type: 'question', text: 'Quem fugiu para Tarsis?', correct: { action: 'move', spaces: 3, msg: 'Jonas! Avance 3 casas.' }, incorrect: { action: 'move', spaces: -1, msg: 'Errado! Volte 1 casa.' } }
+        ],
+        10: [
+            { type: 'challenge', text: 'Imite a mula de Balaão com dor de barriga.', complete: { action: 'stay', msg: 'Que atuação! Fique onde está.' }, incomplete: { action: 'move', spaces: -3, msg: 'Sem graça! Volte 3 casas.' } },
+            { type: 'challenge', text: 'Imite o som da trombeta de Jericó sendo tocada no tom mais desagradável possível.', complete: { action: 'move', spaces: 2, msg: 'As muralhas tremeram! Avance 2.' }, incomplete: { action: 'stay', msg: 'Silêncio... Fique onde está.' } }
+        ],
+        11: [
+            { type: 'question', text: 'Quantos livros tem na Bíblia?', correct: { action: 'move', spaces: 2, msg: '66! Certo! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Incorreto. Fique aí.' } },
+            { type: 'question', text: 'Qual livro da Bíblia não fala o nome de Deus?', correct: { action: 'move', spaces: 2, msg: 'Ester ou Cantares! Certo! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Incorreto. Fique aí.' } },
+            { type: 'question', text: 'Qual o maior Salmo?', correct: { action: 'move', spaces: 2, msg: 'Salmos 119! Certo! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Incorreto. Fique aí.' } },
+            { type: 'question', text: 'Que mulher tentou enganar Deus com a venda de um terreno e morreu?', correct: { action: 'move', spaces: 2, msg: 'Safira! Certo! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Incorreto. Fique aí.' } }
+        ],
+        12: [
+            { type: 'challenge', text: 'Recite o versículo de Gênesis 1 completo como se você fosse gago', complete: { action: 'move', spaces: 4, msg: 'Maravilha! Avance 4 casas.' }, incomplete: { action: 'move', spaces: -2, msg: 'Precisa memorizar. Volte 2 casas.' } },
+            { type: 'challenge', text: 'Recite o versículo de Salmos 91 completo como se você fosse gago', complete: { action: 'move', spaces: 4, msg: 'Maravilha! Avance 4 casas.' }, incomplete: { action: 'move', spaces: -2, msg: 'Precisa memorizar. Volte 2 casas.' } }
+        ],
+        13: [
+            { type: 'question', text: 'Qual o Mar aberto por Moisés através de Deus?', correct: { action: 'move', spaces: 2, msg: 'Vermelho! Certo! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Errado. Fique onde está.' } },
+            { type: 'question', text: 'Qual o nome da mãe de Moisés?', correct: { action: 'move', spaces: 2, msg: 'Joquebede! Certo! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Errado. Fique onde está.' } },
+            { type: 'question', text: 'Qual o nome do cego mais famoso curado por Jesus?', correct: { action: 'move', spaces: 2, msg: 'Bartimeu! Certo! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Errado. Fique onde está.' } },
+            { type: 'question', text: 'Em qual livro está escrito que "o amor tudo suporta"?', correct: { action: 'move', spaces: 2, msg: '1 Corintios! Certo! Avance 2 casas.' }, incorrect: { action: 'stay', msg: 'Errado. Fique onde está.' } }
+        ],
+        14: [
+            { type: 'unlucky', text: 'Saulo ainda não virou Paulo e te prendeu por ser cristão! Perca a próxima rodada.', action: 'skip' }
+        ],
+        15: [
+            { type: 'unlucky', text: 'Começou o decreto dominical, você tem que se esconder, volte para o início do jogo.', action: 'goto', space: 0 }
+        ],
+        16: [
+            { type: 'question', text: 'Qual o primeiro milagre de Jesus?', correct: { action: 'move', spaces: 3, msg: 'A transformação de água em vinho! Certo, avance 3.' }, incorrect: { action: 'move', spaces: -1, msg: 'Não foi esse. Volte 1.' } },
+            { type: 'question', text: 'Sete era filho de quem?', correct: { action: 'move', spaces: 3, msg: 'Adão e Eva! Certo, avance 3.' }, incorrect: { action: 'move', spaces: -1, msg: 'Não foi esse. Volte 1.' } },
+            { type: 'question', text: 'Primogenito de Lia?', correct: { action: 'move', spaces: 3, msg: 'Ruben! Certo, avance 3.' }, incorrect: { action: 'move', spaces: -1, msg: 'Não foi esse. Volte 1.' } },
+            { type: 'question', text: 'Bate Seba era o quê para Salomão?', correct: { action: 'move', spaces: 3, msg: 'Mãe! Certo, avance 3.' }, incorrect: { action: 'move', spaces: -1, msg: 'Não foi esse. Volte 1.' } }
+        ],
+        17: [
+            { type: 'challenge', text: 'Aja como se tivesse a força de Sansão e desafie 1 pessoa do outro time para ganhar uma queda de braço.', complete: { action: 'move', spaces: 2, msg: 'Que força! Avance 2.' }, incomplete: { action: 'stay', msg: 'Faltou espinafre! Fique onde está.' } }
+        ],
+        18: [
+            { type: 'question', text: 'Quem era conhecido por ser ruivo?', correct: { action: 'move', spaces: 3, msg: 'Davi! Correto. Avance 3 casas.' }, incorrect: { action: 'stay', msg: 'Incorreto. Permaneça.' } },
+            { type: 'question', text: 'Quem era o profeta chorão?', correct: { action: 'move', spaces: 3, msg: 'Jeremias! Correto. Avance 3 casas.' }, incorrect: { action: 'stay', msg: 'Incorreto. Permaneça.' } },
+            { type: 'question', text: 'Quem ajudou os espias em Canaã?', correct: { action: 'move', spaces: 3, msg: 'Raabe! Correto. Avance 3 casas.' }, incorrect: { action: 'stay', msg: 'Incorreto. Permaneça.' } },
+            { type: 'question', text: 'Rute era o que para Noemi?', correct: { action: 'move', spaces: 3, msg: 'Nora! Correto. Avance 3 casas.' }, incorrect: { action: 'stay', msg: 'Incorreto. Permaneça.' } }
+        ],
+        19: [
+            { type: 'unlucky', text: 'Os Irmãos de José te jogaram no buraco! Volte 4 casas.', action: 'move', spaces: -4 }
+        ],
+        20: [
+            { type: 'question', text: 'Quantos dias durou o dilúvio?', correct: { action: 'move', spaces: 2, msg: 'Foram 40! Correto, avance 2.' }, incorrect: { action: 'stay', msg: 'Errado. Fique onde está.' } },
+            { type: 'question', text: 'Quantas vezes o Galo cantou quando Pedro negou Jesus?', correct: { action: 'move', spaces: 2, msg: 'Só Uma! Correto, avance 2.' }, incorrect: { action: 'stay', msg: 'Errado. Fique onde está.' } },
+            { type: 'question', text: 'Quantas pragas foram enviadas ao Egito?', correct: { action: 'move', spaces: 2, msg: 'Foram 10! Correto, avance 2.' }, incorrect: { action: 'stay', msg: 'Errado. Fique onde está.' } },
+            { type: 'question', text: 'Quanto tempo o povo que saiu do Egito permaneceu no deserto?', correct: { action: 'move', spaces: 2, msg: 'Foram 40 anos! Correto, avance 2.' }, incorrect: { action: 'stay', msg: 'Errado. Fique onde está.' } }
+        ],
+        21: [
+            { type: 'challenge', text: 'Imite Daniel na cova dos leões, Você é Daniel e 3 amigos vão ficar deitados deixando você acariciar a Juba Cabelo.', complete: { action: 'move', spaces: 2, msg: 'Que coragem! Avance 2.' }, incomplete: { action: 'move', spaces: -2, msg: 'Os leões não gostaram. Volte 2.' } },
+            { type: 'challenge', text: 'Imite Estevão chegando no céu e dando de cara com Paulo', complete: { action: 'move', spaces: 2, msg: 'Muito Bom! Avance 2.' }, incomplete: { action: 'move', spaces: -2, msg: 'Não convenceu. Volte 2.' } }
+        ],
+        22: [
+            { type: 'lucky', text: 'Deus te abençoou em dobro igual Eliseu! Jogue o dado novamente.', action: 'reroll' }
+        ],
+        23: [
+            { type: 'question', text: 'Que povo não sabia a diferença da mão direita para esquerda?', correct: { action: 'move', spaces: 2, msg: 'Ninivitas. Correto, avance 2.' }, incorrect: { action: 'move', spaces: -2, msg: 'Errado. Volte 2.' } },
+            { type: 'question', text: 'Por quantas moedas, Judas traiu Jesus?', correct: { action: 'move', spaces: 2, msg: '30 Moedas. Certo, avance 2.' }, incorrect: { action: 'move', spaces: -2, msg: 'Errado, volte 2.' } },
+            { type: 'question', text: 'Que profeta mesmo após morto ao ter seus ossos tocados, ressuscitou alguém?', correct: { action: 'move', spaces: 2, msg: 'Eliseu. Certo, avance 2.' }, incorrect: { action: 'move', spaces: -2, msg: 'Errado, volte 2.' } },
+            { type: 'question', text: 'Em que monte, Elias humilhou os profetas de Baal?', correct: { action: 'move', spaces: 2, msg: 'Monte Carmelo. Certo, avance 2.' }, incorrect: { action: 'move', spaces: -2, msg: 'Errado, volte 2.' } }
+        ],
+        24: [
+            { type: 'unlucky', text: 'Andou em círculos no deserto por fazer bezerro de ouro. Volte a metade da jornada (casa 15).', action: 'goto', space: 15 }
+        ],
+        25: [
+            { type: 'question', text: 'Diga o nome de dois rios que faziam parte do Éden?', correct: { action: 'move', spaces: 3, msg: 'Tigre e Eufrates! Avance 3.' }, incorrect: { action: 'stay', msg: 'Não. Fique parado.' } },
+            { type: 'question', text: 'Qual Igreja está morna, a ponto de ser vomitada?', correct: { action: 'move', spaces: 3, msg: 'Laodicéia! Avance 3.' }, incorrect: { action: 'stay', msg: 'Não. Fique parado.' } },
+            { type: 'question', text: 'Qual o nome do pai de Samuel?', correct: { action: 'move', spaces: 3, msg: 'Elcana! Avance 3.' }, incorrect: { action: 'stay', msg: 'Não. Fique parado.' } },
+            { type: 'question', text: 'Esaú vendeu sua primogenitura em troca de que?', correct: { action: 'move', spaces: 3, msg: 'Prato de Lentilhas! Avance 3.' }, incorrect: { action: 'stay', msg: 'Não. Fique parado.' } }
+        ],
+        26: [
+            { type: 'challenge', text: 'Leia Exôdo 20 como narrador de futebol da TV', complete: { action: 'move', spaces: 2, msg: 'Que fé! Avance 2 casas.' }, incomplete: { action: 'stay', msg: 'Afundou! Fique onde está.' } },
+            { type: 'challenge', text: 'Leia Gênesis 1 como narrador de futebol da TV', complete: { action: 'move', spaces: 2, msg: 'Que fé! Avance 2 casas.' }, incomplete: { action: 'stay', msg: 'Afundou! Fique onde está.' } },
+            { type: 'challenge', text: 'Leia Levítico 14 como narrador de futebol da TV', complete: { action: 'move', spaces: 2, msg: 'Que fé! Avance 2 casas.' }, incomplete: { action: 'stay', msg: 'Afundou! Fique onde está.' } }
+        ],
+        27: [
+            { type: 'question', text: 'Quem era a rival de Ana, mãe de Samuel?', correct: { action: 'move', spaces: 3, msg: 'Penina! Exato, avance 3.' }, incorrect: { action: 'move', spaces: -3, msg: 'Errado. Volte 3 casas.' } },
+            { type: 'question', text: 'Quem era o filho caçula de Jacó?', correct: { action: 'move', spaces: 3, msg: 'Benjanmin! Exato, avance 3.' }, incorrect: { action: 'move', spaces: -3, msg: 'Errado. Volte 3 casas.' } },
+            { type: 'question', text: 'Abigail foi esposa de que rei?', correct: { action: 'move', spaces: 3, msg: 'Davi! Exato, avance 3.' }, incorrect: { action: 'move', spaces: -3, msg: 'Errado. Volte 3 casas.' } },
+            { type: 'question', text: 'A que povo pertencia o gigante Golias?', correct: { action: 'move', spaces: 3, msg: 'Filisteu! Exato, avance 3.' }, incorrect: { action: 'move', spaces: -3, msg: 'Errado. Volte 3 casas.' } },
+            { type: 'question', text: 'Quem andava com Deus e foi transladado para o céu?', correct: { action: 'move', spaces: 3, msg: 'Enoque! Exato, avance 3.' }, incorrect: { action: 'move', spaces: -3, msg: 'Errado. Volte 3 casas.' } }
+        ],
+        28: [
+            { type: 'lucky', text: 'Anjos te guiaram. Avance 1 casa.', action: 'move', spaces: 1 }
+        ],
+        29: [
+            { type: 'unlucky', text: 'O Apocalipse começou e não achamos seu nome ainda no livro da vida, volte ao início do jogo!', action: 'goto', space: 0 }
+        ],
+        30: [
+            { type: 'question', text: 'Qual filho de Jacó é abençoado por ele como ramo frutífero?', correct: { action: 'move', spaces: 1, msg: 'José! Correto. Avance para a vitória!' }, incorrect: { action: 'move', spaces: -5, msg: 'Errado. Volte 5 casas.' } },
+            { type: 'question', text: 'O que Nabote tinha que o Rei Acabe queria tomar dele?', correct: { action: 'move', spaces: 1, msg: 'Sua Vinha! Correto. Avance para a vitória!' }, incorrect: { action: 'move', spaces: -5, msg: 'Errado. Volte 5 casas.' } },
+            { type: 'question', text: 'Quem era o marido de Safira?', correct: { action: 'move', spaces: 1, msg: 'Ananias! Correto. Avance para a vitória!' }, incorrect: { action: 'move', spaces: -5, msg: 'Errado. Volte 5 casas.' } },
+            { type: 'question', text: 'Qual o livro da bíblia que diz que tudo é vaidade?', correct: { action: 'move', spaces: 1, msg: 'Eclesiastes! Correto. Avance para a vitória!' }, incorrect: { action: 'move', spaces: -5, msg: 'Errado. Volte 5 casas.' } },
+            { type: 'question', text: 'Qual o rei que encontrou o livro da Lei, durante a restauração do templo?', correct: { action: 'move', spaces: 1, msg: 'Josias! Correto. Avance para a vitória!' }, incorrect: { action: 'move', spaces: -5, msg: 'Errado. Volte 5 casas.' } }
+        ],
+    };
+
+    // --- GAME STATE ---
+    let playerPositions = {};
+    let currentPlayerIndex = 0;
+    let players = [];
+    let numPlayers = 0;
+    let skippedTurns = {};
+    let canMove = true;
+    
+    // --- DOM ELEMENTS ---
+    const board = document.getElementById('board');
+    const movePlayerBtn = document.getElementById('movePlayerBtn');
+    const diceInput = document.getElementById('diceInput');
+    const currentPlayerIndicator = document.getElementById('currentPlayerIndicator');
+    const setupScreen = document.getElementById('setupScreen');
+    const gameContainer = document.getElementById('gameContainer');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalText = document.getElementById('modalText');
+    const modalActions = document.getElementById('modalActions');
+
+    // --- BOARD CREATION ---
+    const boardPath = [
+        1, 2, 3, 4, 5, 6,
+        7, 8, 9, 10, 11, 12,
+        13, 14, 15, 16, 17, 18,
+        19, 20, 21, 22, 23, 24,
+        25, 26, 27, 28, 29, 30,
+    ];
+
+    function createBoard() {
+        board.innerHTML = '';
+
+        // Start Cell
+        const startCell = document.createElement('div');
+        startCell.className = 'board-cell flex items-center justify-center bg-blue-900 text-white rounded-full shadow-inner font-bold text-2xl';
+        startCell.textContent = 'TERRA';
+        startCell.id = 'cell-0';
+        board.appendChild(startCell);
+
+        // Path Cells
+        boardPath.forEach(cellNumber => {
+             const cell = document.createElement('div');
+             cell.id = `cell-${cellNumber}`;
+             cell.className = 'board-cell bg-amber-100 border-2 border-amber-300 rounded-lg flex items-center justify-center text-xl font-bold text-amber-700 shadow';
+             cell.textContent = cellNumber;
+             board.appendChild(cell);
+        });
         
-        // Lifeline Buttons & Modal
-        const halfBtn = document.getElementById('half-btn');
-        const tipBtn = document.getElementById('tip-btn');
-        const skipBtn = document.getElementById('skip-btn');
-        const modal = document.getElementById('modal');
-        const modalContent = document.getElementById('modal-content');
+        // Filler cells to complete the grid visually
+        for(let i=0; i<4; i++) {
+             const fillerCell = document.createElement('div');
+             fillerCell.className = 'board-cell bg-transparent';
+             board.appendChild(fillerCell);
+        }
 
-        // Game State
-        let currentQuestionIndex, score, lifelines, activeQuestions, acceptingAnswers;
-        const TOTAL_QUESTIONS_PER_QUIZ = 12;
-
-        const questionBank = [
-          { question: "Quem foi o primeiro missionário oficial enviado pela Associação Geral para o exterior em 1874?", options: ["Joseph Bates", "J. N. Andrews", "Tiago White", "Urias Smith"], answer: "J. N. Andrews", tip: "Ele foi enviado para a Suíça e uma universidade adventista leva seu nome." },
-          { question: "Qual o nome do navio missionário que foi financiado em grande parte pelas ofertas da Escola Sabatina e navegou para as Ilhas Pitcairn?", options: ["O Mensageiro", "A Esperança", "Pitcairn", "Estrela da Manhã"], answer: "Pitcairn", tip: "O nome do navio é o mesmo de seu destino mais famoso." },
-          { question: "Em que cidade ocorreu a histórica sessão da Associação Geral de 1888, focada na justificação pela fé?", options: ["Battle Creek", "Takoma Park", "Minneapolis", "Oakland"], answer: "Minneapolis", tip: "Esta sessão foi um marco teológico e os sermões de Jones e Waggoner foram centrais." },
-          { question: "A 'Reforma de Saúde' foi uma mensagem proeminente entre os pioneiros. Em que ano Ellen White teve sua principal visão sobre o tema?", options: ["1844", "1858", "1863", "1848"], answer: "1863", tip: "Foi no mesmo ano da organização oficial da Associação Geral, mostrando a importância do tema desde o início." },
-          { question: "Qual destes pioneiros NÃO formava o trio inicial que estudou a doutrina do Santuário após o desapontamento de 1844?", options: ["Hiram Edson", "O.R.L. Crosier", "Joseph Bates", "F. B. Hahn"], answer: "Joseph Bates", tip: "Bates foi crucial para a doutrina do Sábado, mas o estudo inicial do santuário partiu de uma experiência em um milharal." },
-          { question: "Qual é o nome da agência humanitária mundial da Igreja Adventista, estabelecida oficialmente em 1984?", options: ["ADRA", "ASA", "Hope Channel", "OFASA"], answer: "ADRA", tip: "Sua sigla significa Agência Adventista de Desenvolvimento e Recursos Assistenciais." },
-          { question: "Segundo dados de 2023, qual Divisão da Igreja Adventista possui o maior número de membros?", options: ["Divisão Norte-Americana", "Divisão Sul-Americana", "Divisão Sul-Asiática", "Divisão Centro-Leste Africana"], answer: "Divisão Centro-Leste Africana", tip: "O crescimento da igreja na África tem sido o mais expressivo nas últimas décadas." },
-          { question: "O projeto 'Impacto Esperança', de distribuição massiva de livros, é uma iniciativa de qual região administrativa da igreja?", options: ["Associação Geral", "Divisão Norte-Americana", "Divisão Sul-Americana", "Divisão Transeuropeia"], answer: "Divisão Sul-Americana", tip: "Este projeto anual mobiliza milhões de membros em 8 países da América do Sul." },
-          { question: "Qual é o nome da Universidade Adventista que abriga o 'Geoscience Research Institute', um instituto de pesquisa sobre ciência e fé?", options: ["Andrews University", "Loma Linda University", "Oakwood University", "Walla Walla University"], answer: "Loma Linda University", tip: "Esta universidade na Califórnia é mundialmente famosa por sua faculdade de medicina e pesquisa." },
-          { question: "O programa de TV 'Está Escrito' foi pioneiro no uso da televisão para o evangelismo. Quem foi seu fundador e primeiro apresentador?", options: ["H.M.S. Richards", "George Vandeman", "Mark Finley", "William Fagal"], answer: "George Vandeman", tip: "Ele iniciou o programa em 1956, focando em uma abordagem cristocêntrica e evangelística." },
-          { question: "A doutrina do 'Juízo Investigativo', um pilar da teologia adventista, está primariamente baseada na interpretação de qual passagem bíblica?", options: ["Gênesis 1-3", "Isaías 53", "Daniel 8:14", "Apocalipse 14"], answer: "Daniel 8:14", tip: "A profecia das 2300 tardes e manhãs é o texto chave para a compreensão desta doutrina." },
-          { question: "Qual o nome da primeira instituição de ensino superior estabelecida pelos adventistas, que mais tarde se tornou a Andrews University?", options: ["Atlantic Union College", "Battle Creek College", "Walla Walla College", "Pacific Union College"], answer: "Battle Creek College", tip: "A instituição foi fundada na cidade que era o coração da igreja em seus primórdios." },
-          { question: "A Igreja Adventista opera a maior rede integrada de hospitais e clínicas protestantes do mundo. Verdadeiro ou Falso?", options: ["Verdadeiro", "Falso", "Apenas na América do Norte", "Apenas em países em desenvolvimento"], answer: "Verdadeiro", tip: "A ênfase na saúde integral resultou em uma vasta rede global de instituições de saúde." },
-          { question: "O Clube de Desbravadores, um ministério mundial para jovens, foi oficialmente adotado pela Associação Geral em que ano?", options: ["1922", "1946", "1950", "1961"], answer: "1950", tip: "Embora clubes locais existissem antes, a oficialização mundial ocorreu em meados do século XX." },
-          { question: "Qual é a posição oficial da Igreja Adventista sobre o serviço militar?", options: ["Obriga o serviço armado", "Proíbe qualquer forma de serviço", "Recomenda o não-combatentismo, servindo em funções que não envolvam portar armas", "Não possui posição oficial"], answer: "Recomenda o não-combatentismo, servindo em funções que não envolvam portar armas", tip: "A posição busca harmonizar o dever cívico com o princípio da não-violência." },
-          { question: "A série de livros 'Conflito dos Séculos' é composta por quantos volumes?", options: ["3", "7", "5", "4"], answer: "5", tip: "Começa com Patriarcas e Profetas e termina com O Grande Conflito." },
-          { question: "O que significa a sigla 'VOP' no contexto da mídia adventista no Brasil?", options: ["Voz da Oração", "Visão do porvir", "A Voz da Profecia", "Verdades para o Povo"], answer: "A Voz da Profecia", tip: "É o programa de rádio mais antigo da igreja, fundado por H.M.S Richards." },
-          { question: "Qual evento histórico é conhecido como o 'Berço do Adventismo'?", options: ["A Reforma Protestante", "O Segundo Grande Despertar", "O Concílio de Nicéia", "A Revolução Francesa"], answer: "O Segundo Grande Despertar", tip: "Foi um período de grande reavivamento religioso nos EUA no início do século XIX, que deu origem a vários movimentos, incluindo o Millerita." },
-          { question: "A 'Missão Calebe' é um projeto de voluntariado que desafia jovens a dedicarem qual período de suas vidas à missão?", options: ["Um fim de semana", "Um mês", "As férias", "Um ano inteiro"], answer: "As férias", tip: "O nome remete ao personagem bíblico que demonstrou fé e coragem para conquistar a terra prometida." },
-          { question: "Quantas crenças fundamentais a Igreja Adventista do Sétimo Dia possui oficialmente?", options: ["10", "27", "28", "30"], answer: "28", tip: "A última crença foi adicionada em 2005." },
-          { question: "Qual foi o primeiro presidente da Associação Geral dos Adventistas do Sétimo Dia?", options: ["Tiago White", "J. N. Loughborough", "John Byington", "George Butler"], answer: "John Byington", tip: "Apesar da grande influência de Tiago White, ele não foi o primeiro a ocupar oficialmente o cargo." },
-          { question: "A teoria musical do 'santuário celestial' influenciou qual aspecto cultural da igreja primitiva?", options: ["A arquitetura das igrejas", "O estilo de pregação", "A hinologia e a música sacra", "As práticas dietéticas"], answer: "A hinologia e a música sacra", tip: "A música era vista como uma forma de adoração que refletia a harmonia celestial." },
-          { question: "Em que país sul-americano a obra adventista começou com a distribuição de literatura por um vendedor de Bíblias?", options: ["Brasil", "Chile", "Argentina", "Peru"], answer: "Argentina", tip: "A obra colportagem foi fundamental para o início da igreja no continente." },
-          { question: "Quem foi a primeira mulher licenciada como ministra pela Igreja Adventista?", options: ["Ellen G. White", "Sarepta Myrenda Irish Henry", "Lottie Blake", "Eva B. Dykes"], answer: "Sarepta Myrenda Irish Henry", tip: "Ela foi uma líder do movimento de temperança antes de se tornar adventista." },
-          { question: "O que foi a 'Reforma do Vestuário' promovida por Ellen White?", options: ["A adoção de uniformes para os membros", "Um estilo de vestimenta modesto e saudável, que não comprimia o corpo", "A proibição do uso de joias", "A criação de uma marca de roupas da igreja"], answer: "Um estilo de vestimenta modesto e saudável, que não comprimia o corpo", tip: "Focava na saúde e simplicidade, em contraste com a moda restritiva da época vitoriana." },
-          { question: "Qual famoso cereal matinal foi inventado pelo Dr. John Harvey Kellogg no Sanatório de Battle Creek?", options: ["Aveia Quaker", "Cheerios", "Corn Flakes (Flocos de Milho)", "All-Bran"], answer: "Corn Flakes (Flocos de Milho)", tip: "A invenção foi parte de uma busca por alimentos saudáveis para os pacientes do sanatório." },
-          { question: "Qual é o nome da publicação oficial da Igreja Adventista, uma das revistas religiosas mais antigas dos EUA?", options: ["Adventist Review", "Signs of the Times", "Liberty Magazine", "Guide Magazine"], answer: "Adventist Review", tip: "Seu nome original era 'The Advent Review and Sabbath Herald'." },
-          { question: "O 'Plano de 5 Dias para Deixar de Fumar' foi uma iniciativa de saúde pública pioneira desenvolvida por qual médico adventista?", options: ["John Harvey Kellogg", "J. Wayne McFarland", "Hans Diehl", "Caldwell Esselstyn"], answer: "J. Wayne McFarland", tip: "Ele e seu colega desenvolveram o programa nos anos 60, com grande sucesso mundial." },
-          { question: "Atualmente, em quantos países e territórios reconhecidos pela ONU a Igreja Adventista possui presença estabelecida?", options: ["Cerca de 150", "Cerca de 180", "Mais de 200", "Em todos os países"], answer: "Mais de 200", tip: "A presença adventista é uma das mais geograficamente difundidas entre as denominações protestantes." },
-          { question: "A sigla 'GCAS' se refere a qual serviço de auditoria interna da igreja?", options: ["Serviço de Auditoria da Associação Geral", "Grupo de Contadores e Auditores Sênior", "Gabinete Central de Auditoria e Supervisão", "Não é uma sigla oficial da igreja"], answer: "Serviço de Auditoria da Associação Geral", tip: "É o órgão responsável por auditar as finanças das organizações da igreja em todo o mundo." },
-        ];
-        
-        // --- Game Logic ---
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
+        // End Cell
+        const endCell = document.createElement('div');
+        endCell.className = 'board-cell flex items-center justify-center bg-sky-400 text-white rounded-full shadow-inner font-bold text-2xl';
+        endCell.textContent = 'CÉU';
+        endCell.id = 'cell-31';
+        board.appendChild(endCell);
+    }
+    
+    // --- GAME LOGIC ---
+    function startGame(teamCount) {
+        numPlayers = teamCount;
+        players = [{ id: 'red', name: 'Vermelho', class: 'player-red', tokenClass: 'token-red' }];
+        players.push({ id: 'blue', name: 'Azul', class: 'player-blue', tokenClass: 'token-blue' });
+        if (numPlayers === 3) {
+            players.push({ id: 'yellow', name: 'Amarelo', class: 'player-yellow', tokenClass: 'token-yellow' });
         }
         
-        function startGame() {
-            welcomeScreen.classList.add('hidden');
-            endScreen.classList.add('hidden');
-            mainGame.classList.remove('hidden');
+        createBoard();
 
-            score = 0;
-            currentQuestionIndex = 0;
-            lifelines = { skip: 1, tip: 1, half: 1 };
-            acceptingAnswers = true;
-            
-            updateLifelineButtons();
-            
-            shuffleArray(questionBank);
-            activeQuestions = questionBank.slice(0, TOTAL_QUESTIONS_PER_QUIZ);
-            
-            buildPyramid();
-            loadQuestion();
-        }
+        players.forEach(p => {
+            playerPositions[p.id] = 0;
+            skippedTurns[p.id] = false;
+            const token = document.createElement('div');
+            token.id = `token-${p.id}`;
+            token.className = `player-token ${p.class}`;
+            token.textContent = p.name.charAt(0);
+            document.getElementById('cell-0').appendChild(token);
+        });
+
+        setupScreen.classList.add('hidden');
+        gameContainer.classList.remove('hidden');
         
-        function buildPyramid() {
-            pyramidEl.innerHTML = '';
-            for(let i = TOTAL_QUESTIONS_PER_QUIZ; i > 0; i--) {
-                const step = document.createElement('div');
-                step.className = 'pyramid-step rounded-md text-center font-bold text-lg p-1';
-                step.textContent = `Pergunta ${i}`;
-                step.dataset.step = i;
-                pyramidEl.appendChild(step);
-            }
-        }
+        currentPlayerIndex = 0;
+        updateCurrentPlayerIndicator();
+        renderPlayerPositions();
+    }
+    
+    function updateCurrentPlayerIndicator() {
+        const player = players[currentPlayerIndex];
+        currentPlayerIndicator.className = `w-24 h-10 rounded-lg mx-auto mt-1 transition-colors bg-${player.id}-500`;
+    }
 
-        function updatePyramid() {
-            document.querySelectorAll('.pyramid-step').forEach(el => el.classList.remove('active'));
-            const currentStep = document.querySelector(`.pyramid-step[data-step="${currentQuestionIndex + 1}"]`);
-            if (currentStep) {
-                currentStep.classList.add('active');
+    function renderPlayerPositions() {
+        players.forEach(p => {
+            const token = document.getElementById(`token-${p.id}`);
+            const cell = document.getElementById(`cell-${playerPositions[p.id]}`);
+            if (token && cell) {
+                token.className = `player-token ${p.class} ${p.tokenClass}`;
+                cell.appendChild(token);
             }
-        }
+        });
+    }
 
-        function loadQuestion() {
-            if (currentQuestionIndex >= TOTAL_QUESTIONS_PER_QUIZ) {
-                endGame(true);
-                return;
-            }
-
-            acceptingAnswers = true;
-            const currentQuestion = activeQuestions[currentQuestionIndex];
-            
-            questionNumberEl.textContent = currentQuestionIndex + 1;
-            questionTextEl.textContent = currentQuestion.question;
-            
-            answerOptionsEl.innerHTML = "";
-            currentQuestion.options.forEach(option => {
-                const button = document.createElement('button');
-                button.innerHTML = `<span>${option}</span>`;
-                button.className = "answer-option text-center p-4 rounded-lg text-lg";
-                button.onclick = () => selectAnswer(button, option);
-                answerOptionsEl.appendChild(button);
-            });
-            updatePyramid();
-        }
+    function switchPlayer() {
+        currentPlayerIndex = (currentPlayerIndex + 1) % numPlayers;
+        updateCurrentPlayerIndicator();
         
-        function selectAnswer(button, selectedOption) {
-            if (!acceptingAnswers) return;
-            acceptingAnswers = false;
+        if (skippedTurns[players[currentPlayerIndex].id]) {
+            skippedTurns[players[currentPlayerIndex].id] = false;
+            showModal('Pular Rodada', `O time ${players[currentPlayerIndex].name} perdeu a vez e não joga nesta rodada.`, [{ text: 'Entendi', action: () => { hideModal(); switchPlayer(); } }]);
+        } else {
+            canMove = true;
+            movePlayerBtn.disabled = false;
+            diceInput.disabled = false;
+            movePlayerBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            diceInput.value = '';
+            diceInput.focus();
+        }
+    }
 
-            const currentQuestion = activeQuestions[currentQuestionIndex];
-            const isCorrect = selectedOption === currentQuestion.answer;
-            
-            button.classList.add(isCorrect ? 'correct' : 'incorrect');
+    movePlayerBtn.addEventListener('click', () => {
+        if (!canMove) return;
 
-            if (isCorrect) {
-                score++;
-                setTimeout(() => {
-                    currentQuestionIndex++;
-                    loadQuestion();
-                }, 1500);
-            } else {
-                Array.from(answerOptionsEl.children).forEach(btn => {
-                    if (btn.textContent === currentQuestion.answer) {
-                        btn.classList.add('correct');
-                    }
-                });
-                setTimeout(() => {
-                    endGame(false);
-                }, 2500);
-            }
+        const roll = parseInt(diceInput.value, 10);
+
+        if (isNaN(roll) || roll < 1 || roll > 6) {
+            showModal('Entrada Inválida', 'Por favor, insira um número de 1 a 6 no campo do dado.', [{ text: 'Ok', action: hideModal, class: 'bg-red-500' }]);
+            return;
         }
 
-        function updateLifelineButtons() {
-            halfBtn.disabled = lifelines.half === 0;
-            tipBtn.disabled = lifelines.tip === 0;
-            skipBtn.disabled = lifelines.skip === 0;
+        canMove = false;
+        movePlayerBtn.disabled = true;
+        diceInput.disabled = true;
+        movePlayerBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+        movePlayer(roll);
+    });
+
+    function movePlayer(steps) {
+        const player = players[currentPlayerIndex];
+        const oldPosition = playerPositions[player.id];
+        let newPosition = oldPosition + steps;
+        
+        if (newPosition >= 31) {
+            newPosition = 31;
+            playerPositions[player.id] = newPosition;
+            renderPlayerPositions();
+            setTimeout(() => showWinner(player), 500);
+            return;
         }
 
-        // --- Lifeline Functions ---
-        function useHalf() {
-            if (lifelines.half > 0) {
-                lifelines.half = 0;
-                updateLifelineButtons();
-                
-                const currentQuestion = activeQuestions[currentQuestionIndex];
-                const incorrectOptions = currentQuestion.options.filter(opt => opt !== currentQuestion.answer);
-                shuffleArray(incorrectOptions);
-                
-                const optionsToHide = incorrectOptions.slice(0, 2);
-                
-                Array.from(answerOptionsEl.children).forEach(btn => {
-                    if (optionsToHide.includes(btn.textContent)) {
-                        btn.style.visibility = 'hidden';
-                        btn.disabled = true;
-                    }
-                });
-            }
+        playerPositions[player.id] = newPosition;
+        renderPlayerPositions();
+
+        setTimeout(() => handleSpaceEvent(newPosition), 800);
+    }
+    
+    function applyConsequence(consequence) {
+        hideModal();
+        const player = players[currentPlayerIndex];
+        
+        if (consequence.msg) {
+            setTimeout(() => {
+                showModal('Resultado', consequence.msg, [{ text: 'Ok', action: () => {
+                    hideModal();
+                    applyAction(consequence);
+                } }]);
+            }, 500);
+        } else {
+            applyAction(consequence);
+        }
+    }
+
+    function applyAction(consequence) {
+        const player = players[currentPlayerIndex];
+        switch (consequence.action) {
+            case 'move':
+                playerPositions[player.id] += consequence.spaces;
+                if (playerPositions[player.id] < 0) playerPositions[player.id] = 0;
+                if (playerPositions[player.id] >= 31) playerPositions[player.id] = 31;
+                renderPlayerPositions();
+                if (playerPositions[player.id] === 31) {
+                    setTimeout(() => showWinner(player), 500);
+                } else {
+                    setTimeout(switchPlayer, 800);
+                }
+                break;
+            case 'goto':
+                playerPositions[player.id] = consequence.space;
+                renderPlayerPositions();
+                setTimeout(switchPlayer, 800);
+                break;
+            case 'skip':
+                skippedTurns[player.id] = true;
+                switchPlayer();
+                break;
+            case 'reroll':
+                canMove = true;
+                movePlayerBtn.disabled = false;
+                diceInput.disabled = false;
+                movePlayerBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                diceInput.value = '';
+                diceInput.focus();
+                break;
+            case 'stay':
+            default:
+                switchPlayer();
+                break;
+        }
+    }
+
+    function handleSpaceEvent(spaceNumber) {
+        const challengeOptions = challenges[spaceNumber];
+        if (!challengeOptions || challengeOptions.length === 0) {
+            switchPlayer();
+            return;
         }
 
-        function useTip() {
-            if (lifelines.tip > 0) {
-                lifelines.tip = 0;
-                updateLifelineButtons();
-                const currentQuestion = activeQuestions[currentQuestionIndex];
-                modalContent.textContent = currentQuestion.tip;
-                modal.classList.remove('hidden');
-            }
+        // Pick a random challenge from the available options for that space
+        const challenge = challengeOptions[Math.floor(Math.random() * challengeOptions.length)];
+
+        const title = `Casa ${spaceNumber}`;
+        const text = challenge.text;
+        let actions = [];
+
+        switch (challenge.type) {
+            case 'question':
+                actions.push({ text: 'Acertei', action: () => applyConsequence(challenge.correct), class: 'bg-green-500' });
+                actions.push({ text: 'Errei', action: () => applyConsequence(challenge.incorrect), class: 'bg-red-500' });
+                break;
+            case 'challenge':
+                actions.push({ text: 'Desafio Cumprido!', action: () => applyConsequence(challenge.complete), class: 'bg-blue-500' });
+                actions.push({ text: 'Não cumpri', action: () => applyConsequence(challenge.incomplete), class: 'bg-yellow-500' });
+                break;
+            case 'lucky':
+            case 'unlucky':
+                actions.push({ text: 'Ok', action: () => applyConsequence(challenge), class: 'bg-stone-500' });
+                break;
         }
+        showModal(title, text, actions);
+    }
 
-        function useSkip() {
-            if (lifelines.skip > 0) {
-                lifelines.skip = 0;
-                updateLifelineButtons();
-                currentQuestionIndex++;
-                loadQuestion();
-            }
-        }
+    function showModal(title, text, actions = []) {
+        modalTitle.textContent = title;
+        modalText.textContent = text;
+        modalActions.innerHTML = '';
+        actions.forEach(act => {
+            const btn = document.createElement('button');
+            btn.textContent = act.text;
+            btn.className = `${act.class || 'bg-gray-500'} text-white font-bold py-2 px-6 rounded-lg hover:opacity-90 transition`;
+            btn.onclick = act.action;
+            modalActions.appendChild(btn);
+        });
+        modal.classList.add('active');
+    }
 
-        function closeModal() {
-            modal.classList.add('hidden');
-        }
-        window.closeModal = closeModal;
+    function hideModal() {
+        modal.classList.remove('active');
+    }
+    
+    function showWinner(player) {
+        const actions = [{
+            text: 'Jogar Novamente',
+            action: () => {
+                hideModal();
+                location.reload(); // Simple way to restart
+            },
+            class: 'bg-amber-600'
+        }];
+        showModal(`🎉 Vitória do Time ${player.name}! 🎉`, 'Parabéns por completarem a jornada bíblica! Vocês chegaram à terra prometida.', actions);
+    }
 
-        function endGame(isWinner) {
-            mainGame.classList.add('hidden');
-            endScreen.classList.remove('hidden');
-            
-            if (isWinner) {
-                endTitleEl.textContent = "Parabéns!";
-                endMessageEl.textContent = "Você respondeu todas as perguntas e provou ser um verdadeiro abençoado! Seu conhecimento é inspirador.";
-            } else {
-                endTitleEl.textContent = "Fim de Jogo";
-                endMessageEl.textContent = `Você acertou ${score} de ${currentQuestionIndex + 1} perguntas. Continue estudando para alcançar o topo!`;
-            }
-        }
-
-        // Event Listeners
-        startBtn.addEventListener('click', startGame);
-        restartBtn.addEventListener('click', startGame);
-        halfBtn.addEventListener('click', useHalf);
-        tipBtn.addEventListener('click', useTip);
-        skipBtn.addEventListener('click', useSkip);
-
-    </script>
+</script>
 </body>
 </html>
+
